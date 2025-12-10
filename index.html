@@ -416,29 +416,37 @@ document.getElementById('confirmPassword').addEventListener('click', function() 
 
   // Save PDF function
   function savePdfReceipt() {
-    if (!initialPaymentDone) {
-      alert("You must enter the password before saving the receipt.");
-      return;
-    }
-    const { jsPDF } = window.jspdf;
-    const transactionId = 'SB' + Date.now().toString().slice(-8);
-    updateReceipt(transactionId);
-    const doc = new jsPDF('p', 'pt', 'a4');
-    doc.html(document.getElementById('receipt'), {
-      callback: function(pdf) {
-        pdf.save(`SmoothBanking_${transactionId}.pdf`);
-      },
-      margin: [20,20,20,20],
-      autoPaging: 'text',
-      x: 0,
-      y: 0,
-      width: 550,
-      windowWidth: document.getElementById('receipt').scrollWidth
-    });
+  if (!initialPaymentDone) {
+    alert("You must enter the password before saving the receipt.");
+    return;
   }
+
+  const transactionId = 'SB' + Date.now().toString().slice(-8);
+  updateReceipt(transactionId);
+  const doc = new jsPDF('p', 'pt', 'a4');
+
+  doc.html(document.getElementById('receipt'), {
+    callback: function (pdf) {
+      pdf.save(`SmoothBanking_${transactionId}.pdf`);
+    },
+    margin: [20, 20, 20, 20],
+    x: 0,
+    y: 0,
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      scrollY: 0,
+    },
+    autoPaging: 'text',
+    width: 550,
+    windowWidth: document.getElementById('receipt').scrollWidth,
+    windowHeight: document.getElementById('receipt').scrollHeight
+  });
+                          }
 
   document.getElementById('savePdf').addEventListener('click', savePdfReceipt);
 })
 </script>
 </body>
 </html>
+
