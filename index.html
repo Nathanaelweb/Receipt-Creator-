@@ -430,23 +430,119 @@ document.getElementById('confirmPassword').addEventListener('click', function() 
       pdf.save(`SmoothBanking_${transactionId}.pdf`);
     },
     margin: [20, 20, 20, 20],
-    x: 0,
-    y: 0,
-    html2canvas: {
-      scale: 2,
-      useCORS: true,
-      scrollY: 0,
-    },
-    autoPaging: 'text',
-    width: 550,
-    windowWidth: document.getElementById('receipt').scrollWidth,
-    windowHeight: document.getElementById('receipt').scrollHeight
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const { jsPDF } = window.jspdf;
+
+  function formatCurrency(amount, symbol) {
+    if (!amount || isNaN(amount)) return symbol + "0.00";
+    return symbol + Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2 });
+  }
+
+  function updateReceipt(transactionId) {
+    document.getElementById('r_payer').textContent = document.getElementById('payer').value;
+    document.getElementById('r_account').textContent = document.getElementById('account').value;
+    document.getElementById('r_receiver').textContent = document.getElementById('receiver').value;
+    document.getElementById('r_receiverAcc').textContent = document.getElementById('receiverAcc').value;
+    document.getElementById('r_bankName').textContent = document.getElementById('bankName').value;
+    document.getElementById('r_amount').textContent = formatCurrency(
+      document.getElementById('amount').value,
+      document.getElementById('currency').value
+    );
+    document.getElementById('r_narration').textContent = document.getElementById('narration').value;
+
+    const now = new Date();
+    document.getElementById('r_date').textContent = now.toLocaleString();
+    document.getElementById('r_number').textContent = "Transaction #: " + transactionId;
+  }
+
+  function generateTransactionId() {
+    return 'SB' + Date.now().toString().slice(-8);
+  }
+
+  let initialPaymentDone = false;
+
+  // Show modal on load
+  window.addEventListener('load', function() {
+    document.getElementById('paymentModal').style.display = 'flex';
   });
-                          }
+
+  // Handle password check
+  document.getElementById('confirmPassword').addEventListener('click', function() {
+    const password = document.getElementById('paymentPassword').value.trim();
+    const successBox = document.getElementById('passwordSuccess');
+
+    if (password === '78900') {
+      successBox.style.display = 'block';
+      initialPaymentDone = true;
+      document.getElementById('paymentModal').style.display = 'none';
+
+      setTimeout(() => successBox.style.display = 'none', 3000);
+    } else {
+      alert('Incorrect password. Please contact 09135624312 on WhatsApp for assistance.');
+    }
+  });
+
+  // Prevent closing modal by clicking outside
+  const modal = document.getElementById('paymentModal');
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      // do nothing (prevent close)
+    }
+  });
+
+  // Save PDF
+  function savePdfReceipt() {
+    if (!initialPaymentDone) {
+      alert("You must enter the password before saving the receipt.");
+      return;
+    }
+
+    const transactionId = generateTransactionId();
+    updateReceipt(transactionId);
+
+    // ensure the receipt is visible and readable
+    const receiptEl = document.getElementById('receipt');
+    const prevDisplay = receiptEl.style.display;
+    receiptEl.style.display = 'block';
+    receiptEl.style.overflow = 'visible';
+
+    // log important fields (for debugging)
+    console.log('Amount:', document.getElementById('r_amount').textContent);
+    console.log('Receiver:', document.getElementById('r_receiver').textContent);
+
+    // delay to ensure DOM is rendered before capture
+    setTimeout(() => {
+      const doc = new jsPDF('p', 'pt', 'a4');
+      const receiptWidth = receiptEl.scrollWidth;
+      const receiptHeight = receiptEl.scrollHeight;
+
+      doc.html(receiptEl, {
+        callback: function (pdf) {
+          pdf.save(`SmoothBanking_${transactionId}.pdf`);
+          // restore display
+          receiptEl.style.display = prevDisplay;
+        },
+        margin: [20, 20, 20, 20],
+        x: 0,
+        y: 0,
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          scrollY: 0
+        },
+        autoPaging: 'text',
+        width: receiptWidth,
+        windowWidth: receiptWidth,
+        windowHeight: receiptHeight
+      });
+    }, 150); // wait ~150ms to ensure DOM updates
+  }
 
   document.getElementById('savePdf').addEventListener('click', savePdfReceipt);
-})
+});
 </script>
 </body>
 </html>
+
 
